@@ -57,7 +57,7 @@ function getProjectSettings(callback) {
             const $ = cheerio.load(content, {xmlMode: true});
 
             const getIncludePaths = function () {
-                $('configuration[name=Release]').find('option[valueType=includePath]').children('listOptionValue').each(function (index, item) {
+                $('configuration[name=Flash]').find('option[valueType=includePath]').children('listOptionValue').each(function (index, item) {
                     const $item = $(item);
 
                     const value = $item.attr('value').replace(/"/g, '');
