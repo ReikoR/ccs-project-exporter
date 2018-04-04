@@ -227,6 +227,8 @@ function processLinkedResource(filePath, callback) {
 }
 
 function processIncludes(oldPath, newPath, callback) {
+    logger.log('processIncludes', oldPath, '->', newPath);
+
     const includePattern = /#include\s+?"(.+)"/g;
 
     fs.readFile(newPath, 'utf8', function (err, content) {
@@ -268,13 +270,26 @@ function processIncludes(oldPath, newPath, callback) {
                         //logger.log('replace', match[1], '->', newIncludePath);
                         content = content.replace(match[1], newIncludePath);
 
-                        fs.copy(fullPath, newIncludeFilePath, function (err) {
+                        // Check if target file already exists
+                        fs.open(newIncludeFilePath, 'wx', function (err, fd) {
                             if (err) {
-                                logger.error(err);
-                                cb(err);
+                                if (err.code === 'EEXIST') {
+                                    logger.log(newIncludeFilePath, 'already exist');
+                                    processIncludes(fullPath, newIncludeFilePath, cb);
+                                    return;
+                                }
                             } else {
-                                processIncludes(fullPath, newIncludeFilePath, cb);
+                                fs.closeSync(fd);
                             }
+
+                            fs.copy(fullPath, newIncludeFilePath, function (err) {
+                                if (err) {
+                                    logger.error(err);
+                                    cb(err);
+                                } else {
+                                    processIncludes(fullPath, newIncludeFilePath, cb);
+                                }
+                            });
                         });
                     });
 
